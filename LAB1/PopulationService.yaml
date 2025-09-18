@@ -1,0 +1,278 @@
+openapi: 3.0.3
+info:
+  title: population API
+  description: API для управления популяцией City
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:5737/api/v1
+
+paths:
+  /genocide/count/{id1}/{id2}/{id3}:
+    get:
+      tags:
+        - genocide
+      summary: Рассчитать суммарное население трех городов
+      description: Возвращает сумму населения трех городов с указанными id
+      parameters:
+        - name: id1
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+          description: id первого города
+        - name: id2
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+          description: id второго города
+        - name: id3
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+          description: id третьего города
+      responses:
+        '200':
+          description: Успешный расчет суммарного населения
+          content:
+            application/xml:
+              schema:
+                type: object
+                xml:
+                  name: PopulationSum
+                properties:
+                  totalPopulation:
+                    type: integer
+                    description: Суммарное население трех городов
+                  cityIds:
+                    type: array
+                    items:
+                      type: integer
+                    description: Массив идентификаторов городов
+                  details:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CityPopulationDetail'
+        '400':
+          description: Неверные параметры запроса
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Один или несколько городов не найдены
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /genocide/deport/{id-from}/{id-to}:
+    post:
+      tags:
+        - genocide
+      summary: Депортировать население между городами
+      description: Перемещает все население из города-источника в город-назначение
+      parameters:
+        - name: id-from
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+          description: id города-источника
+        - name: id-to
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+          description: id города-назначения
+      responses:
+        '200':
+          description: Население депортировано
+          content:
+            application/xml:
+              schema:
+                type: object
+                xml:
+                  name: DeportationResult
+                properties:
+                  success:
+                    type: boolean
+                    description: Статус операции
+                  fromCity:
+                    $ref: '#/components/schemas/City'
+                  toCity:
+                    $ref: '#/components/schemas/City'
+                  movedPopulation:
+                    type: integer
+                    description: Количество перемещенного населения
+        '400':
+          description: Неверные параметры запроса
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Один или оба города не найдены
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    Error:
+      type: object
+      xml:
+        name: Error
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: Код ошибки
+        message:
+          type: string
+          description: Сообщение об ошибке
+        timestamp:
+          type: string
+          format: date-time
+          description: Время возникновения ошибки          
+    
+    CityPopulationDetail:
+      type: object
+      xml:
+        name: CityDetail
+      properties:
+        cityId:
+          type: integer
+          format: int64
+          description: ID города
+        cityName:
+          type: string
+          description: Название города
+        population:
+          type: integer
+          description: Население города
+
+    City:
+      type: object
+      xml:
+        name: City
+      required:
+        - id
+        - name
+        - coordinates
+        - creationDate
+        - area
+        - population
+        - carCode
+        - climate
+        - governor
+      properties:
+        id:
+          type: integer
+          format: int64
+          readOnly: true
+          minimum: 1
+          description: uid
+        name:
+          type: string
+          minLength: 1
+          description: Название города
+        coordinates:
+          $ref: '#/components/schemas/Coordinates'
+        creationDate:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Дата создания (генерируется автоматически)
+        area:
+          type: integer
+          minimum: 1
+          description: Площадь города (> 0)
+        population:
+          type: integer
+          minimum: 1
+          description: Население города (> 0)
+        metersAboveSeaLevel:
+          type: number
+          format: double
+          nullable: true
+          description: Высота над уровнем моря
+        carCode:
+          type: integer
+          format: int64
+          minimum: 1
+          maximum: 1000
+          description: Код автомобиля (1-1000)
+        climate:
+          type: string
+          enum: [OCEANIC, STEPPE, SUBARCTIC, DESERT]
+          description: Климат
+        standardOfLiving:
+          type: string
+          enum: [ULTRA_HIGH, MEDIUM, VERY_LOW]
+          nullable: true
+          description: Уровень жизни
+        governor:
+          $ref: '#/components/schemas/Human'
+  
+    Coordinates:
+      type: object
+      xml:
+        name: Coordinates
+      required:
+        - x
+        - y
+      properties:
+        x:
+          type: number
+          format: double
+          minimum: -190
+          exclusiveMinimum: true
+          description: Координата X (> -190)
+        y:
+          type: number
+          format: double
+          description: Координата Y
+  
+    Human:
+      type: object
+      xml:
+        name: Human
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          description: Имя человека
+        age:
+          type: integer
+          format: int64
+          minimum: 1
+          nullable: true
+          description: Возраст человека (> 0)
+        height:
+          type: number
+          format: double
+          minimum: 0
+          exclusiveMinimum: true
+          nullable: true
+          description: Рост человека (> 0)
+        birthday:
+          type: string
+          format: date
+          nullable: true
+          description: День рождения человека
