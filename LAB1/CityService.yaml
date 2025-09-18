@@ -1,211 +1,110 @@
 openapi: 3.0.3
 info:
-  title: City Collection Management API
-  description: RESTful API для управления коллекцией объектов City с поддержкой XML формата
+  title: City Collection API
+  description: API для управления коллекцией объектов City
   version: 1.0.0
 
 servers:
-  - url: http://localhost:8080/api
-    description: Development server
+  - url: http://localhost:5736/api/v1
 
 tags:
   - name: cities
-    description: Базовые операции с коллекцией городов
+    description: Операции с коллекцией City
   - name: utils
-    description: Специальные операции с коллекцией
+    description: Специальные операции
 
 paths:
   /cities:
     get:
       tags:
         - cities
-      summary: Получить список городов или создать новый город
-      description: |
-        Если передан параметр `action=create`, выполняется создание нового города.
-        Иначе выполняется поиск и фильтрация списка городов с поддержкой пагинации, сортировки и фильтрации.
-        Все параметры передаются в URL запроса.
+      summary: Получить список городов
+      description: Поиск и фильтрация списка городов с поддержкой пагинации
+      operationId: getCities
       parameters:
-        - in: query
-          name: action
+        #сортировка
+        - name: sort
+          in: query
+          description: Сортировка элемнтов массива
+          required: false
+          explode: true
           schema:
-            type: string
-            enum: [create]
-          description: Флаг для создания нового города
-
-        # Параметры для создания города
-        - in: query
-          name: name
-          schema:
-            type: string
-          description: Название города (обязательно при создании)
-        - in: query
-          name: coordinates.x
-          schema:
-            type: number
-            format: double
-            minimum: -190
-            exclusiveMinimum: true
-          description: Координата X (> -190, обязательно при создании)
-        - in: query
-          name: coordinates.y
-          schema:
-            type: number
-            format: double
-          description: Координата Y (обязательно при создании)
-        - in: query
-          name: area
-          schema:
-            type: integer
-            minimum: 1
-          description: Площадь города (> 0, обязательно при создании)
-        - in: query
-          name: population
-          schema:
-            type: integer
-            minimum: 1
-          description: Население города (> 0, обязательно при создании)
-        - in: query
-          name: metersAboveSeaLevel
-          schema:
-            type: number
-            format: double
-          description: Высота над уровнем моря
-        - in: query
-          name: carCode
-          schema:
-            type: integer
-            format: int64
-            minimum: 1
-            maximum: 1000
-          description: Код автомобиля (1-1000, обязательно при создании)
-        - in: query
-          name: climate
-          schema:
-            type: string
-            enum: [OCEANIC, STEPPE, SUBARCTIC, DESERT]
-          description: Климат (обязательно при создании)
-        - in: query
-          name: standardOfLiving
-          schema:
-            type: string
-            enum: [ULTRA_HIGH, MEDIUM, VERY_LOW]
-          description: Уровень жизни
-        - in: query
-          name: governor.name
-          schema:
-            type: string
-          description: Имя губернатора (обязательно при создании)
-        - in: query
-          name: governor.age
-          schema:
-            type: integer
-            format: int64
-            minimum: 1
-          description: Возраст губернатора (> 0)
-        - in: query
-          name: governor.height
-          schema:
-            type: number
-            format: double
-            minimum: 0
-            exclusiveMinimum: true
-          description: Рост губернатора (> 0)
-        - in: query
-          name: governor.birthday
-          schema:
-            type: string
-            format: date
-          description: День рождения губернатора
-
-        # Параметры для пагинации и сортировки
-        - in: query
-          name: page
-          schema:
-            type: integer
-            minimum: 1
-            default: 1
-          description: Номер страницы
-        - in: query
-          name: size
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 10
-          description: Размер страницы
-        - in: query
-          name: sortBy
-          schema:
-            type: string
-            enum: [id, name, area, population, metersAboveSeaLevel, carCode, creationDate]
-          description: Поле для сортировки
+            type: array
+            items: 
+              type: string
+              default: id
+              enum: 
+                - id
+                - name
+                - coordinates.x
+                - coordinates.y
+                - creationDate
+                - area
+                - population
+                - metersAboveSeaLevel
+                - carCode
+                - climate
+                - standardOfLiving
+                - governor.name
+                - governor.age
+                - governor.height
+                - governor.birthday
         - in: query
           name: sortOrder
           schema:
             type: string
             enum: [asc, desc]
             default: asc
-          description: Порядок сортировки
+          description: Порядок сортировки.
+        # пагинация
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+          description: Номер страницы
+        - name: pageSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 100
+          description: Размер страницы
+        
+        # фильтрация
+        - name: filter
+          in: query
+          required: false
+          description: |
+            Параметры фильтрации в формате field[operator]=value.
+            Доступные операторы: eq, ne, gt, lt, gte, lte, like, in, notin.
+            Примеры: name[eq]=Moscow, area[gt]=100, climate[in]=OCEANIC,STEPPE
+          style: deepObject
+          explode: true
+          schema:
+            type: object
+            additionalProperties:
+              type: string
+            example:
+              name[eq]: "Moscow"
+              area[gt]: "100"
+              climate[in]: "OCEANIC,STEPPE"
+              coordinates.x[gt]: "-100"
+              governor.age[lt]: "50"
 
-        # Параметры для фильтрации
-        - in: query
-          name: name
-          schema:
-            type: string
-          description: Фильтр по названию города
-        - in: query
-          name: area[gt]
-          schema:
-            type: integer
-          description: Фильтр по площади (больше указанного значения)
-        - in: query
-          name: area[lt]
-          schema:
-            type: integer
-          description: Фильтр по площади (меньше указанного значения)
-        - in: query
-          name: population[gt]
-          schema:
-            type: integer
-          description: Фильтр по населению (больше указанного значения)
-        - in: query
-          name: population[lt]
-          schema:
-            type: integer
-          description: Фильтр по населению (меньше указанного значения)
-        - in: query
-          name: carCode
-          schema:
-            type: integer
-          description: Фильтр по коду автомобиля
-        - in: query
-          name: climate
-          schema:
-            type: string
-            enum: [OCEANIC, STEPPE, SUBARCTIC, DESERT]
-          description: Фильтр по климату
-        - in: query
-          name: standardOfLiving
-          schema:
-            type: string
-            enum: [ULTRA_HIGH, MEDIUM, VERY_LOW]
-          description: Фильтр по уровню жизни
-
-      responses:
-        '200':
-          description: Успешный ответ со списком городов
+      responses: 
+        '200': 
+          description: Успешный ответ
           content:
             application/xml:
               schema:
                 $ref: '#/components/schemas/CityArray'
-        '201':
-          description: Город успешно создан
-          content:
-            application/xml:
-              schema:
-                $ref: '#/components/schemas/City'
         '400':
-          description: Ошибка валидации данных
+          description: Неверные входные данные
           content:
             application/xml:
               schema:
@@ -216,12 +115,18 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/Error'
-
+        default: 
+          description: возвращает код ошибки
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Error'
+  # получение элемента по id
   /cities/{id}:
     get:
       tags:
         - cities
-      summary: Получить город по идентификатору
+      summary: Получить город по id
       parameters:
         - in: path
           name: id
@@ -238,19 +143,19 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/City'
-        '404':
-          description: Город не найден
-          content:
-            application/xml:
-              schema:
-                $ref: '#/components/schemas/Error'
         '400':
           description: Неверный ID
           content:
             application/xml:
               schema:
                 $ref: '#/components/schemas/Error'
-
+        '404':
+          description: Город с указанным ID не найден
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Error'
+    # обновление элемента
     put:
       tags:
         - cities
@@ -366,11 +271,12 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/Error'
-
+    # удаление элемента
+ 
     delete:
       tags:
         - cities
-      summary: Удалить город по идентификатору
+      summary: Удалить город по id
       parameters:
         - in: path
           name: id
@@ -379,10 +285,10 @@ paths:
             type: integer
             format: int64
             minimum: 1
-          description: ID удаляемого города
+          description: id удаляемого города
       responses:
         '204':
-          description: Город успешно удален
+          description: Город удален
         '404':
           description: Город не найден
           content:
@@ -396,6 +302,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  # Удалить все объекты, значение поля metersAboveSeaLevel которого эквивалентно заданному.
   /cities/utils/delete-by-sea-level:
     delete:
       tags:
@@ -428,7 +335,7 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/Error'
-
+  # Рассчитать среднее значение поля carCode для всех объектов.
   /cities/utils/average-car-code:
     get:
       tags:
@@ -455,6 +362,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  # Вернуть один (любой) объект, значение поля name которого является минимальным
   /cities/utils/min-name:
     get:
       tags:
@@ -473,7 +381,7 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/Error'
-
+          
 components:
   schemas:
     CityArray:
@@ -483,7 +391,7 @@ components:
         wrapped: true
       items:
         $ref: '#/components/schemas/City'
-
+        
     City:
       type: object
       xml:
@@ -504,7 +412,7 @@ components:
           format: int64
           readOnly: true
           minimum: 1
-          description: Уникальный идентификатор (генерируется автоматически)
+          description: uid
         name:
           type: string
           minLength: 1
@@ -546,7 +454,7 @@ components:
           description: Уровень жизни
         governor:
           $ref: '#/components/schemas/Human'
-
+  
     Coordinates:
       type: object
       xml:
@@ -565,7 +473,7 @@ components:
           type: number
           format: double
           description: Координата Y
-
+  
     Human:
       type: object
       xml:
@@ -576,26 +484,26 @@ components:
         name:
           type: string
           minLength: 1
-          description: Имя губернатора
+          description: Имя человека
         age:
           type: integer
           format: int64
           minimum: 1
           nullable: true
-          description: Возраст губернатора (> 0)
+          description: Возраст человека (> 0)
         height:
           type: number
           format: double
           minimum: 0
           exclusiveMinimum: true
           nullable: true
-          description: Рост губернатора (> 0)
+          description: Рост человека (> 0)
         birthday:
           type: string
           format: date
           nullable: true
-          description: День рождения губернатора
-
+          description: День рождения человека
+  
     Error:
       type: object
       xml:
@@ -611,4 +519,5 @@ components:
         timestamp:
           type: string
           format: date-time
-          description: Время возникновения ошибки
+          description: Время возникновения ошибки          
+          
