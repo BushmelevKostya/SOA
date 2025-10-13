@@ -49,13 +49,21 @@ paths:
                 - governor.age
                 - governor.height
                 - governor.birthday
-        - in: query
-          name: sortOrder
-          schema:
-            type: string
-            enum: [asc, desc]
-            default: asc
-          description: Порядок сортировки.
+                - -id
+                - -name
+                - -coordinates.x
+                - -coordinates.y
+                - -creationDate
+                - -area
+                - -population
+                - -metersAboveSeaLevel
+                - -carCode
+                - -climate
+                - -standardOfLiving
+                - -governor.name
+                - -governor.age
+                - -governor.height
+                - -governor.birthday
         # пагинация
         - name: page
           in: query
@@ -108,19 +116,26 @@ paths:
           content:
             application/xml:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/Error400'
+        '422':
+          description: Ошибка валидации тела запроса
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Error422'
         '500':
           description: Внутренняя ошибка сервера
           content:
             application/xml:
               schema:
-                $ref: '#/components/schemas/Error'
-        default: 
-          description: возвращает код ошибки
+                $ref: '#/components/schemas/Error500'
+        default:
+          description: Непредвиденная ошибка
           content:
             application/xml:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ErrorDefault'
+
   # получение элемента по id
   /cities/{id}:
     get:
@@ -148,13 +163,83 @@ paths:
           content:
             application/xml:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/Error400'
         '404':
           description: Город с указанным ID не найден
           content:
             application/xml:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/Error404'
+        default:
+          description: Непредвиденная ошибка
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorDefault'
+
+    # создание нового элемента
+    post:
+      tags:
+        - cities
+      summary: Создать новый город
+      description: Создает новый город
+      requestBody:
+        required: true
+        content:
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/CreateCityRequest'
+            example: |
+              <CityCreateRequest>
+                <name>Москва</name>
+                <coordinates>
+                  <x>55.7558</x>
+                  <y>37.6173</y>
+                </coordinates>
+                <area>1000</area> 
+                <population>100000</population>
+                <metersAboveSeaLevel>156.0</metersAboveSeaLevel>
+                <carCode>10</carCode>
+                <climate>STEPPE</climate>
+                <standardOfLiving>ULTRA_HIGH</standardOfLiving>
+                <governor>
+                  <name>Имя</name>
+                  <age>60</age>
+                  <height>1.78</height>
+                  <birthday>1975-01-01</birthday>
+                </governor>
+              </CityCreateRequest>
+      responses:
+        '201':
+          description: Город успешно создан
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/City'
+        '400':
+          description: Неверные данные запроса
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Error400'
+        '422':
+          description: Ошибка валидации тела запроса
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Error422'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Error500'
+        default:
+          description: Непредвиденная ошибка
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorDefault'
     # обновление элемента
     put:
       tags:
@@ -169,89 +254,32 @@ paths:
             format: int64
             minimum: 1
           description: ID обновляемого города
-        - in: query
-          name: name
-          schema:
-            type: string
-          description: Новое название города
-        - in: query
-          name: coordinates.x
-          schema:
-            type: number
-            format: double
-            minimum: -190
-            exclusiveMinimum: true
-          description: Новая координата X
-        - in: query
-          name: coordinates.y
-          schema:
-            type: number
-            format: double
-          description: Новая координата Y
-        - in: query
-          name: area
-          schema:
-            type: integer
-            minimum: 1
-          description: Новая площадь
-        - in: query
-          name: population
-          schema:
-            type: integer
-            minimum: 1
-          description: Новое население
-        - in: query
-          name: metersAboveSeaLevel
-          schema:
-            type: number
-            format: double
-          description: Новая высота над уровнем моря
-        - in: query
-          name: carCode
-          schema:
-            type: integer
-            format: int64
-            minimum: 1
-            maximum: 1000
-          description: Новый код автомобиля
-        - in: query
-          name: climate
-          schema:
-            type: string
-            enum: [OCEANIC, STEPPE, SUBARCTIC, DESERT]
-          description: Новый климат
-        - in: query
-          name: standardOfLiving
-          schema:
-            type: string
-            enum: [ULTRA_HIGH, MEDIUM, VERY_LOW]
-          description: Новый уровень жизни
-        - in: query
-          name: governor.name
-          schema:
-            type: string
-          description: Новое имя губернатора
-        - in: query
-          name: governor.age
-          schema:
-            type: integer
-            format: int64
-            minimum: 1
-          description: Новый возраст губернатора
-        - in: query
-          name: governor.height
-          schema:
-            type: number
-            format: double
-            minimum: 0
-            exclusiveMinimum: true
-          description: Новый рост губернатора
-        - in: query
-          name: governor.birthday
-          schema:
-            type: string
-            format: date
-          description: Новый день рождения губернатора
+      requestBody:
+        required: true
+        content:
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/CreateCityRequest'
+            example: |
+              <CityCreateRequest>
+                <name>Москва</name>
+                <coordinates>
+                  <x>55.7558</x>
+                  <y>37.6173</y>
+                </coordinates>
+                <area>1000</area> 
+                <population>100000</population>
+                <metersAboveSeaLevel>156.0</metersAboveSeaLevel>
+                <carCode>10</carCode>
+                <climate>STEPPE</climate>
+                <standardOfLiving>ULTRA_HIGH</standardOfLiving>
+                <governor>
+                  <name>Имя</name>
+                  <age>60</age>
+                  <height>1.78</height>
+                  <birthday>1975-01-01</birthday>
+                </governor>
+              </CityCreateRequest>
       responses:
         '200':
           description: Город успешно обновлен
@@ -264,15 +292,27 @@ paths:
           content:
             application/xml:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/Error400'
         '404':
           description: Город не найден
           content:
             application/xml:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/Error404'
+        '422':
+          description: Ошибка валидации тела запроса
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Error422'
+        default:
+          description: Непредвиденная ошибка
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorDefault'
+
     # удаление элемента
- 
     delete:
       tags:
         - cities
@@ -294,16 +334,22 @@ paths:
           content:
             application/xml:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/Error404'
         '400':
           description: Неверный ID
           content:
             application/xml:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/Error400'
+        default:
+          description: Непредвиденная ошибка
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorDefault'
 
   # Удалить все объекты, значение поля metersAboveSeaLevel которого эквивалентно заданному.
-  /cities/utils/delete-by-sea-level:
+  /cities/sea-level:
     delete:
       tags:
         - utils
@@ -334,9 +380,15 @@ paths:
           content:
             application/xml:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/Error400'
+        default:
+          description: Непредвиденная ошибка
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorDefault'
   # Рассчитать среднее значение поля carCode для всех объектов.
-  /cities/utils/average-car-code:
+  /cities/car-code/avg:
     get:
       tags:
         - utils
@@ -360,10 +412,16 @@ paths:
           content:
             application/xml:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/Error404'
+        default:
+          description: Непредвиденная ошибка
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorDefault'
 
   # Вернуть один (любой) объект, значение поля name которого является минимальным
-  /cities/utils/min-name:
+  /cities/name/min:
     get:
       tags:
         - utils
@@ -380,7 +438,13 @@ paths:
           content:
             application/xml:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/Error404'
+        default:
+          description: Непредвиденная ошибка
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorDefault'
           
 components:
   schemas:
@@ -416,6 +480,7 @@ components:
         name:
           type: string
           minLength: 1
+          example: "Санкт-Петербург"
           description: Название города
         coordinates:
           $ref: '#/components/schemas/Coordinates'
@@ -484,6 +549,7 @@ components:
         name:
           type: string
           minLength: 1
+          example: "Костя"
           description: Имя человека
         age:
           type: integer
@@ -504,20 +570,90 @@ components:
           nullable: true
           description: День рождения человека
   
-    Error:
+    Error400:
+      xml:
+        name: message
+      type: string
+      example: "Ошибка в url запроса"
+      description: Сообщение об ошибке
+    Error404:
+      xml:
+        name: message
+      type: string
+      example: "Объект не найден"
+      description: Сообщение об ошибке
+    Error422:
+      xml:
+        name: message
+      type: string
+      example: "Ошибка валидации тела запроса"
+      description: Сообщение об ошибке
+    Error500:
+      xml:
+        name: message
+      type: string
+      example: "Ошибка сервера"
+      description: Сообщение об ошибке
+    ErrorDefault:
+      xml:
+        name: message
+      type: string
+      example: "Непридвиденная ошибка"
+      description: Сообщение об ошибке
+
+    CreateCityRequest:
       type: object
       xml:
-        name: Error
+        name: CreateCityRequest
+      required:
+        - name
+        - coordinates
+        - area
+        - population
+        - carCode
+        - climate
+        - governor
       properties:
-        code:
+        name:
+          type: string
+          minLength: 1
+          example: "Москва"
+          description: Название города
+        coordinates:
+          $ref: '#/components/schemas/Coordinates'
+        area:
           type: integer
-          format: int32
-          description: Код ошибки
-        message:
+          minimum: 1
+          example: 2561
+          description: Площадь города (> 0)
+        population:
+          type: integer
+          minimum: 1
+          example: 12655000
+          description: Население города (> 0)
+        metersAboveSeaLevel:
+          type: number
+          format: double
+          nullable: true
+          example: 156.0
+          description: Высота над уровнем моря
+        carCode:
+          type: integer
+          format: int64
+          minimum: 1
+          maximum: 1000
+          example: 77
+          description: Код автомобиля (1-1000)
+        climate:
           type: string
-          description: Сообщение об ошибке
-        timestamp:
+          enum: [ OCEANIC, STEPPE, SUBARCTIC, DESERT ]
+          example: "STEPPE"
+          description: Климат
+        standardOfLiving:
           type: string
-          format: date-time
-          description: Время возникновения ошибки          
-          
+          enum: [ ULTRA_HIGH, MEDIUM, VERY_LOW ]
+          nullable: true
+          example: "ULTRA_HIGH"
+          description: Уровень жизни
+        governor:
+          $ref: '#/components/schemas/Human'
