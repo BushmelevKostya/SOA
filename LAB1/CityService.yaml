@@ -30,10 +30,10 @@ paths:
           explode: true
           schema:
             type: array
-            items: 
+            items:
               type: string
               default: id
-              enum: 
+              enum:
                 - id
                 - name
                 - coordinates.x
@@ -104,25 +104,36 @@ paths:
               coordinates.x[gt]: "-100"
               governor.age[lt]: "50"
 
-      responses: 
-        '200': 
+      responses:
+        '200':
           description: Успешный ответ
           content:
             application/xml:
               schema:
-                $ref: '#/components/schemas/CityArray'
+                type: object
+                xml:
+                  name: CitiesResponse
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CityArray'
+                  page:
+                    type: integer
+                    description: Текущий номер страницы
+                    example: 1
+                  pageSize:
+                    type: integer
+                    description: Размер страницы
+                    example: 10
+                  totalPages:
+                    type: integer
+                    description: Общее количество страниц
+                    example: 26
         '400':
           description: Неверные входные данные
           content:
             application/xml:
               schema:
                 $ref: '#/components/schemas/Error400'
-        '422':
-          description: Ошибка валидации тела запроса
-          content:
-            application/xml:
-              schema:
-                $ref: '#/components/schemas/Error422'
         '500':
           description: Внутренняя ошибка сервера
           content:
@@ -445,7 +456,7 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/ErrorDefault'
-          
+
 components:
   schemas:
     CityArray:
@@ -455,7 +466,7 @@ components:
         wrapped: true
       items:
         $ref: '#/components/schemas/City'
-        
+
     City:
       type: object
       xml:
@@ -510,16 +521,16 @@ components:
           description: Код автомобиля (1-1000)
         climate:
           type: string
-          enum: [OCEANIC, STEPPE, SUBARCTIC, DESERT]
+          enum: [ OCEANIC, STEPPE, SUBARCTIC, DESERT ]
           description: Климат
         standardOfLiving:
           type: string
-          enum: [ULTRA_HIGH, MEDIUM, VERY_LOW]
+          enum: [ ULTRA_HIGH, MEDIUM, VERY_LOW ]
           nullable: true
           description: Уровень жизни
         governor:
           $ref: '#/components/schemas/Human'
-  
+
     Coordinates:
       type: object
       xml:
@@ -538,7 +549,7 @@ components:
           type: number
           format: double
           description: Координата Y
-  
+
     Human:
       type: object
       xml:
@@ -569,7 +580,7 @@ components:
           format: date
           nullable: true
           description: День рождения человека
-  
+
     Error400:
       xml:
         name: message
